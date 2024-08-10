@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chef Maker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+            background-color: #f4f4f4;
+        }
+        textarea, select {
+            width: 80%;
+            margin-bottom: 20px;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            color: #333;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            width: 80%;
+            margin: 20px auto;
+            max-width: 800px;
+            text-align: left;
+            transition: transform 0.3s, opacity 0.3s;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        .result.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .result h2 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .result h3 {
+            color: #555;
+            font-size: 20px;
+            margin-top: 20px;
+        }
+        .result p {
+            margin: 10px 0;
+        }
+        .result ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .result ul li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chef Maker</h1>
+    <textarea id="ingredients" rows="5" placeholder="Enter all ingredients here..."></textarea><br>
+    
+    <label for="mealType">Meal Type:</label>
+    <select id="mealType">
+        <option value="dinner">Dinner</option>
+        <option value="lunch">Lunch</option>
+        <option value="breakfast">Breakfast</option>
+        <option value="snack">Snack</option>
+    </select><br>
+
+    <label for="recipeType">Recipe Type:</label>
+    <input type="radio" id="new" name="recipeType" value="new">
+    <label for="new">New Recipe</label>
+    <input type="radio" id="existing" name="recipeType" value="existing">
+    <label for="existing">Existing Recipe</label><br>
+    
+    <button onclick="generateText()">Generate Recipe</button>
+    
+    <div id="result" class="result"></div>
+
+    <script>
+        async function generateText() {
+            const ingredients = document.getElementById('ingredients').value;
+            const mealType = document.getElementById('mealType').value;
+            const recipeType = document.querySelector('input[name="recipeType"]:checked')?.value;
+            const resultDiv = document.getElementById('result');
+
+            if (!ingredients) {
+                resultDiv.innerHTML = '<p>Please enter ingredients.</p>';
+                return;
+            }
+            if (!recipeType) {
+                resultDiv.innerHTML = '<p>Please select a recipe type.</p>';
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:5000/generate-text', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        prompt: `Generate a ${mealType} recipe that is ${recipeType} with the following ingredients: ${ingredients}.${recipeType === 'new' ? 'Generate them only with given ingredients. Do not use any new ingredients.':'' } . ${recipeType === 'existing' ? 'Please provide the source of your information.' : ''}`
+                    })
+                });
+
+                const data = await response.json();
+                const resultDiv = document.getElementById('result');
+                if (data.text) {
+                    // Format the plain text output
+                    const formattedText = data.text
+                        .replace(/(\*\*.*?\*\*)/g, '<strong>$1</strong>')  // Convert bold text
+                        .replace(/(\*.*?\*)/g, '<em>$1</em>')  // Convert italic text
+                        .replace(/(\d+\.)\s/g, '<br><br>$1 ')  // Add breaks before numbered lists
+                        .replace(/(\n)/g, '<br>');  // Convert newlines to <br>
+
+                    resultDiv.innerHTML = formattedText;
+                    resultDiv.classList.add('show');  // Trigger animation
+                } else {
+                    resultDiv.innerHTML = '<p>No text generated</p>';
+                }
+            } catch (error) {
+                console.error('Error generating text:', error);
+                resultDiv.innerHTML = '<p>Failed to generate text.</p>';
+            }
+        }
+    </script>
+</body>
+</html>
