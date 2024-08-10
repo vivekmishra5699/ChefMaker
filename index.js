@@ -9,7 +9,7 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-const genAI = new GoogleGenerativeAI("AIzaSyBgw1TcFOOz8lXvcbIaQMuIbLBL68uaOJc");
+const genAI = new GoogleGenerativeAI("api-key");
 
 app.post("/generate-text", async (req, res) => {
   try { 
